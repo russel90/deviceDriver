@@ -16,11 +16,11 @@ int main(int argc, char **argv)
     printf("GPIO Set : %s\n", argv[1]);
     fd = open("/dev/gpioled", O_RDWR);
     if(fd < 0){
-        printf("Error : Open()\n");
+        printf("Error : Open() - %d\n", fd);
         return -1;
     }
     
-    count = write(fd, argv[1], strlen(argv[1]));
+    count = write(fd, argv[1], argv[2], strlen(argv[1]));
     if(count < 0){
         printf("Error : write()\n");
         return -1;
