@@ -1,0 +1,1 @@
+cmd_/home/pi/deviceDriver/ch01_Raspiberry/gpio_module.ko := ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/pi/deviceDriver/ch01_Raspiberry/gpio_module.ko /home/pi/deviceDriver/ch01_Raspiberry/gpio_module.o /home/pi/deviceDriver/ch01_Raspiberry/gpio_module.mod.o ;  true
