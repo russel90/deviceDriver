@@ -187,12 +187,15 @@ static void __exit cleanupModule(void)
     printk(KERN_INFO "Exit gpio_module\n");
 
     // 2. remove charcter device structure
-    cdev_del(&gpio_cdev);
+    free_irq(switch_irq, NULL);
+
+	cdev_del(&gpio_cdev);
 	gpio_direction_output(GPIO_LED1, 0);
 	gpio_free(GPIO_LED1);
 
 	gpio_direction_output(GPIO_LED2, 0);
 	gpio_free(GPIO_LED2);
+	
 
     // 3. remove virtual address of charater device
     if(gpio)

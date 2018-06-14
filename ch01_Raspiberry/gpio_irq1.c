@@ -48,9 +48,9 @@ int main(int argc, char **argv)
     printf("/dev/gpioirq_led1 opened\n");
 
 	// sleep(2);
-    // close(fd);
-    // system("sudo rmmod gpioirq_module");
-    // printf("/dev/gpioirq_led1 closed\n");
+    close(fd);
+    system("sudo rmmod gpioirq_module");
+    printf("/dev/gpioirq_led1 closed\n");
 
     return 0;
 }
