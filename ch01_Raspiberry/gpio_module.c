@@ -162,3 +162,19 @@ module_init(initModule);
 
 // define clean up function name
 module_exit(cleanupModule);
+
+static int test_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg )
+{
+	 int ret;
+	 test_data param;
+
+	 switch( cmd ){
+		case  IOCTL_OUT:
+			ret = copy_from_user( (void *)&param, (void *)arg, sizeof(param) );
+			out_func( param.num, param.data );
+			return 0;
+	}
+	
+	return -EINVAL;
+
+}

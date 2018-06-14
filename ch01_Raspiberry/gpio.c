@@ -11,6 +11,16 @@
 
 #define BUFFER_SIZE 100
 
+void test_out(void)
+{
+    test_data param;
+
+    param.num = 1;
+    param.data = 'a';
+
+    ioctl( test_dev.fd, IOTCL_OUT, &param );
+}
+
 int main(int argc, char **argv)
 {
     int fd =-1;
