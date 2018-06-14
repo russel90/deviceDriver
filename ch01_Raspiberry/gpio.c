@@ -2,6 +2,12 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #define BUFFER_SIZE 100
 
@@ -14,13 +20,21 @@ int main(int argc, char **argv)
     memset(buffer, 0, BUFFER_SIZE);
 
     printf("GPIO Set : %s\n", argv[1]);
-    fd = open("/dev/gpioled", O_RDWR);
-    if(fd < 0){
-        printf("Error : Open() - %d\n", fd);
-        return -1;
+    while((fd = open("/dev/gpioled",O_RDWR)) < 0){
+        switch(errno){
+            case ENXIO:
+                system("sudo insmod gpio_module.ko");
+                break;
+            case ENOENT:
+                system("sudo mknod /dev/gpioled c 200 0");        
+                system("sudo chmod 666 /dev/gpioled");
+                break;
+            default:
+                break;
+        }
     }
-    
-    count = write(fd, argv[1], argv[2], strlen(argv[1]));
+
+    count = write(fd, argv[1], strlen(argv[1]));
     if(count < 0){
         printf("Error : write()\n");
         return -1;
@@ -34,9 +48,8 @@ int main(int argc, char **argv)
 
     printf("/dev/gpioled opened\n");
 
-    sleep(5);
     close(fd);
-
+    system("sudo rmmod gpio_module");
     printf("/dev/gpioled closed\n");
 
     return 0;
