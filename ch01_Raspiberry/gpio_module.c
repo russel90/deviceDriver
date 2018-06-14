@@ -111,7 +111,7 @@ static ssize_t gpio_write(struct file  *inod, const char *buff, size_t len, loff
     count = copy_from_user(msg, buff, len);
 
     g = simple_strtol(buff, 0, 10);
-    GPIO_SET(g);
+    (g== 1) ?  GPIO_SET(GPIO_LED1) : GPIO_CLR(GPIO_LED1);
 
     printk(KERN_INFO "GPIO Device Write : %s %d\n", msg, g);
 
