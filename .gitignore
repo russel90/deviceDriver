@@ -3,3 +3,5 @@
 *.cmd
 *.mod
 *.mod.c
+ch01_Raspiberry/gpioirq_module.ko
+*.ko

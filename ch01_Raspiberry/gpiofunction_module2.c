@@ -5,27 +5,19 @@
 #include <linux/module.h>
 #include <linux/io.h>
 #include <linux/uaccess.h>
+#include <linux/gpio.h>
 
 #define GPIO_MAJOR 200
 #define GPIO_MINOR 0
-#define GPIO_DEVICE "gpioled"
+#define GPIO_DEVICE "gpioled2"
 
-// Raspi 2,3 PHYSICAL I/O PERI BASE ADDR
-#define BCM_IO_BASE 0x3F000000
-#define GPIO_BASE (BCM_IO_BASE + 0x200000)
-#define GPIO_SIZE 0xB4
-
-#define GPIO_IN(g)  (*(gpio+((g)/10)) &= (1<<(((g)%10)*3))) 
-#define GPIO_OUT(g) (*(gpio+((g)/10)) |= (1<<(((g)%10)*3)))
-
-#define GPIO_SET(g) (*(gpio+7)  = (1<<g))
-#define GPIO_CLR(g) (*(gpio+10) = (1<<g))
-#define GPIO_GET(g) (*(gpio+13)&(1<<g))
 #define GPIO_LED1 17
 #define GPIO_LED2 27
-#define BUF_SIZE 100
-
+#define buf_size 100
 #define BUFFER_SIZE 100
+
+#define GPIO_BASE (BCM_IO_BASE + 0x200000)
+#define GPIO_SIZE 0xB4
 
 static char msg[BUFFER_SIZE] = {0};
 
@@ -53,7 +45,6 @@ static int __init initModule(void)
 {
     dev_t devno;
     unsigned int count;
-    static void *map;
     int err;
 
     // checking function called
@@ -61,10 +52,10 @@ static int __init initModule(void)
     // 1. register charater device
     devno = MKDEV(GPIO_MAJOR, GPIO_MINOR);
     printk(KERN_INFO "DEVICE NO = 0x%x\n", devno);
-    register_chrdev_region(devno, 1,GPIO_DEVICE);
+    register_chrdev_region(devno, 1, GPIO_DEVICE);
 
     // printk(KERN_INFO "Init gpio_module\n");
-    
+
     // 2. initialze charater device structure
     cdev_init(&gpio_cdev, &gpio_fops);
     count = 1;
@@ -79,18 +70,20 @@ static int __init initModule(void)
     printk(KERN_INFO "'mknod /dev/%s c %d 0'\n", GPIO_DEVICE, GPIO_MAJOR);
     printk(KERN_INFO "'chmod 666 /dev/%s'\n", GPIO_DEVICE);
 
-    // 4. return physical memory address
-    map = ioremap(GPIO_BASE, GPIO_SIZE);
-    if(!map){
-	    printk(KERN_INFO "Error : mapping GPIO memory\n");
-	    iounmap(map);
-	    return -EBUSY;
-    }
+	// gpio_request fuction is defined in gpio.h
+	err = gpio_request(GPIO_LED1,"LED");
+	if(err == -EBUSY){
+		printk(KERN_INFO "Error gpio_request\n");
+	}
 
-   gpio = (volatile unsigned int *)map;
-   GPIO_OUT(GPIO_LED1);
-   GPIO_OUT(GPIO_LED2);
-    
+	err = gpio_request(GPIO_LED2,"LED");
+	if(err == -EBUSY){
+		printk(KERN_INFO "Error gpio_request\n");
+	}
+
+	gpio_direction_output(GPIO_LED1, 0);
+	gpio_direction_output(GPIO_LED2, 0);
+
    return 0;
 }
 
@@ -111,9 +104,25 @@ static ssize_t gpio_write(struct file  *inod, const char *buff, size_t len, loff
     count = copy_from_user(msg, buff, len);
 
     g = simple_strtol(buff, 0, 10);
-    (g== 1) ?  GPIO_SET(GPIO_LED1) : GPIO_CLR(GPIO_LED1);
+	switch(g){
+		case 0:
+			gpio_set_value(GPIO_LED1, 0);
+			gpio_set_value(GPIO_LED2, 0);
+			break;
+		case 1:
+			gpio_set_value(GPIO_LED1, 1);
+			gpio_set_value(GPIO_LED2, 0);
+			break;
+		case 2:
+			gpio_set_value(GPIO_LED1, 1);
+			gpio_set_value(GPIO_LED2, 1);
+			break;
+		default:
+			break;
 
-    printk(KERN_INFO "GPIO Device Write : %s %d\n", msg, g);
+	}
+
+    printk(KERN_INFO "GPIO Device Write : %d\n", g);
 
     return count;
 }
@@ -121,14 +130,19 @@ static ssize_t gpio_write(struct file  *inod, const char *buff, size_t len, loff
 static ssize_t gpio_read(struct file *inode, char *buff, size_t len, loff_t *off)
 {
     int g;
-    int results;
+    int results1, results2, count;
 
     memset(msg, 0, sizeof(msg));
     g = simple_strtol(buff, NULL, 10);
-    results = GPIO_GET(g);
-    printk(KERN_INFO "GPIO Device read: Message = %s, GPIO No: %d, GPIO Value: %d\n", msg, g, results);
+    results1 = gpio_get_value(GPIO_LED1);
+	results2 = gpio_get_value(GPIO_LED2);
+	
+	strcat(msg, " from kernel");
+	count = copy_to_user(buff, msg, strlen(msg)+1);
 
-    return results;
+    printk(KERN_INFO "GPIO Device read: Message = %s, GPIO Output Mode: %d, GPIO LED1 Value: %d, GPIO_LED2 Value: %d\n", msg, g, results1, results2);
+
+    return count;
 }
 
 static int gpio_close(struct inode *inod, struct file *fil)
@@ -149,6 +163,11 @@ static void __exit cleanupModule(void)
 
     // 2. remove charcter device structure
     cdev_del(&gpio_cdev);
+	gpio_direction_output(GPIO_LED1, 0);
+	gpio_free(GPIO_LED1);
+
+	gpio_direction_output(GPIO_LED2, 0);
+	gpio_free(GPIO_LED2);
 
     // 3. remove virtual address of charater device
     if(gpio)

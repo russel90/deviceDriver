@@ -19,14 +19,14 @@ int main(int argc, char **argv)
     memset(buffer, 0, BUFFER_SIZE);
 
     printf("GPIO Set : %s\n", argv[1]);
-    while((fd = open("/dev/gpioled",O_RDWR)) < 0){
+    while((fd = open("/dev/gpioled1",O_RDWR)) < 0){
         switch(errno){
             case ENXIO:
-                system("sudo insmod gpiofunction_module.ko");
+                system("sudo insmod gpiofunction_module1.ko");
                 break;
             case ENOENT:
-                system("sudo mknod /dev/gpioled c 200 0");        
-                system("sudo chmod 666 /dev/gpioled");
+                system("sudo mknod /dev/gpioled1 c 200 0");        
+                system("sudo chmod 666 /dev/gpioled1");
                 break;
 			default:
                 break;
@@ -45,12 +45,12 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    printf("/dev/gpioled opened\n");
+    printf("/dev/gpioled1 opened\n");
 
 	sleep(2);
     close(fd);
-    system("sudo rmmod gpiofunction_module");
-    printf("/dev/gpioled closed\n");
+    system("sudo rmmod gpiofunction_module1");
+    printf("/dev/gpioled1 closed\n");
 
     return 0;
 }
