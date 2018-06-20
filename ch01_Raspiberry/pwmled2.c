@@ -144,6 +144,38 @@ int led_on(unsigned short value)
 }
 
 
+int blinkLed(void)
+{
+		int i;
+		unsigned short max = 4095;
+		
+		while(1)
+		{
+			for(i=0; i<max;i+=5){
+					i += 15;
+					value = i;
+					
+					write_reg16(LED15_ON_L, max - value);
+					write_reg16(LED15_OFF_L, max);
+					usleep(20);
+				}
+				
+			for(i=0; i<max;i+=5){
+					i += 15;
+					value = i;
+					
+					write_reg16(LED15_ON_L, value);
+					write_reg16(LED15_OFF_L, max);
+					usleep(20);
+				}
+			}
+
+
+		for(i = 
+
+		return 0;
+}
+
 int main(void)
 {
 	unsigned short value=2047;
@@ -161,6 +193,8 @@ int main(void)
 	pca9685_restart();
 	pca9685_freq();
 	led_on(value);
+	
+	blinkLed();
 	
 	return 0;
 }
